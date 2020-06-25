@@ -45,20 +45,18 @@ struct ControlPoint {
 };
 
 
-[[patch(quad, 4)]]
+[[patch(triangle, 3)]]
 vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[stage_in]],
                              constant float4x4 &mvp [[buffer(1)]],
-                             float2 patch_coord [[position_in_patch]],
+                             float3 patch_coord [[position_in_patch]],
                              uint patch_id [[patch_id]])
 {
   VertexOut out;
     float u = patch_coord.x;
     float v = patch_coord.y;
-//  float4 position = mvp * in.position;
-    float2 top = mix(control_points[0].position.xz, control_points[1].position.xz, u);
-    float2 bottom = mix(control_points[3].position.xz, control_points[2].position.xz, u);
-    float2 interpolated = mix(top, bottom, v);
-    out.position = float4(interpolated.x, interpolated.y, 0, 1);
+    float w = patch_coord.z;
+    float4 interpolated = control_points[0].position * u + control_points[1].position * v + control_points[2].position * w;
+    out.position = mvp * float4(interpolated.xyz, 1);
     if (patch_id == 0) {
         out.color = float4(1, 0, 0, 1);
     }
@@ -77,15 +75,13 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 }
 
 kernel void tessellation_main(constant float* edge_factors [[ buffer(0) ]],
-                              constant float* inside_factors [[ buffer(1) ]],
-                              device MTLQuadTessellationFactorsHalf* factors [[buffer(2)]],
+                              constant float& inside_factors [[ buffer(1) ]],
+                              device MTLTriangleTessellationFactorsHalf* factors [[buffer(2)]],
                               uint pid [[thread_position_in_grid]]) {
     
     factors[pid].edgeTessellationFactor[0] = edge_factors[0];
     factors[pid].edgeTessellationFactor[1] = edge_factors[1];
     factors[pid].edgeTessellationFactor[2] = edge_factors[2];
-    factors[pid].edgeTessellationFactor[3] = edge_factors[3];
 
-    factors[pid].insideTessellationFactor[0] = inside_factors[0];
-    factors[pid].insideTessellationFactor[1] = inside_factors[1];
+    factors[pid].insideTessellationFactor = inside_factors;
 }

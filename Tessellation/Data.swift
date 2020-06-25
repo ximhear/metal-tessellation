@@ -48,35 +48,20 @@ let vertexBuffer = Renderer.device.makeBuffer(bytes: vertices,
      - size: size of plane
  - Returns: an array of patch control points. Each group of four makes one patch.
 **/
-func createControlPoints(patches: (horizontal: Int, vertical: Int),
-                         size: (width: Float, height: Float)) -> [float3] {
+func createControlPoints(patchLevel: Int, controlPoints c: [float3]) -> [float3] {
   
-  var points: [float3] = []
-  // per patch width and height
-  let width = 1 / Float(patches.horizontal)
-  let height = 1 / Float(patches.vertical)
-  
-  for j in 0..<patches.vertical {
-    let row = Float(j)
-    for i in 0..<patches.horizontal {
-      let column = Float(i)
-      let left = width * column
-      let bottom = height * row
-      let right = width * column + width
-      let top = height * row + height
-      
-      points.append([left, 0, top])
-      points.append([right, 0, top])
-      points.append([right, 0, bottom])
-      points.append([left, 0, bottom])
+    if patchLevel == 0 {
+        return c
     }
-  }
-  // size and convert to Metal coordinates
-  // eg. 6 across would be -3 to + 3
-  points = points.map {
-    [$0.x * size.width - size.width / 2,
-     0,
-     $0.z * size.height - size.height / 2]
-  }
+    var points: [float3] = []
+    
+    var m: [float3] = []
+    m.append((c[0] + c[1]) / 2)
+    m.append((c[1] + c[2]) / 2)
+    m.append((c[2] + c[0]) / 2)
+    points.append(contentsOf: createControlPoints(patchLevel: patchLevel - 1, controlPoints: [c[0], m[0], m[2]]))
+    points.append(contentsOf: createControlPoints(patchLevel: patchLevel - 1, controlPoints: [m[0], c[1], m[1]]))
+    points.append(contentsOf: createControlPoints(patchLevel: patchLevel - 1, controlPoints: [m[1], c[2], m[2]]))
+    points.append(contentsOf: createControlPoints(patchLevel: patchLevel - 1, controlPoints: [m[0], m[1], m[2]]))
   return points
 }

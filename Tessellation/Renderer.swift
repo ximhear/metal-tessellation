@@ -40,19 +40,19 @@ class Renderer: NSObject {
 
   // model transform
   var position = float3([0, 0, 0])
-  var rotation = float3(Float(-90).degreesToRadians, 0, 0)
+  var rotation = float3(Float(-0).degreesToRadians, 0, 0)
   var modelMatrix: float4x4 {
     let translationMatrix = float4x4(translation: position)
     let rotationMatrix = float4x4(rotation: rotation)
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 2, vertical: 8)
+    let patchLevel = 4
     var patchCount: Int {
-        patches.horizontal * patches.vertical
+        return Int(pow(Double(4), Double(patchLevel)))
     }
-    var edgeFactors: [Float] = [16, 16, 16, 16]
-    var insideFactors: [Float] = [16, 16]
+    var edgeFactors: [Float] = [16, 16, 16]
+    var insideFactors: Float = 16
     var controlPointsBuffer: MTLBuffer?
     var tessellationPipelineState: MTLComputePipelineState
     
@@ -81,7 +81,7 @@ class Renderer: NSObject {
                                          blue: 1, alpha: 1)
     metalView.delegate = self
     
-    let controlPoints = createControlPoints(patches: patches, size: (2, 2))
+    let controlPoints = createControlPoints(patchLevel: patchLevel, controlPoints: [float3(0, -0.9, 0), float3(-0.9, 0.9, 0), float3(0.9, 0.9, 0)])
     controlPointsBuffer = Renderer.device.makeBuffer(bytes: controlPoints, length: MemoryLayout<float3>.stride * controlPoints.count)
   }
   
@@ -146,7 +146,7 @@ extension Renderer: MTKViewDelegate {
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     computeEncoder.setComputePipelineState(tessellationPipelineState)
     computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
-    computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 1)
+    computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size, index: 1)
     computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
     let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
     computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
@@ -166,7 +166,7 @@ extension Renderer: MTKViewDelegate {
     // draw
     renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
 //    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count)
-    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+    renderEncoder.drawPatches(numberOfPatchControlPoints: 3,
                               patchStart: 0, patchCount: patchCount,
                               patchIndexBuffer: nil,
                               patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
