@@ -57,16 +57,8 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     float w = patch_coord.z;
     float4 interpolated = control_points[0].position * u + control_points[1].position * v + control_points[2].position * w;
     out.position = mvp * float4(interpolated.xyz, 1);
-    if (patch_id == 0) {
-        out.color = float4(1, 0, 0, 1);
-    }
-    else if (patch_id == 1) {
-        out.color = float4(0, 1, 0, 1);
-    }
-    else {
-        out.color = float4(u, v, 0, 1);
-    }
-  return out;
+    out.color = float4(u, v, w, 1);
+    return out;
 }
 
 fragment float4 fragment_main(VertexOut in [[stage_in]])

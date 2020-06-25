@@ -40,7 +40,7 @@ class Renderer: NSObject {
 
   // model transform
   var position = float3([0, 0, 0])
-  var rotation = float3(Float(-0).degreesToRadians, 0, 0)
+  var rotation = float3(0, 0, Float(-180).degreesToRadians)
   var modelMatrix: float4x4 {
     let translationMatrix = float4x4(translation: position)
     let rotationMatrix = float4x4(rotation: rotation)
