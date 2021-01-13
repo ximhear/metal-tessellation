@@ -33,7 +33,8 @@ using namespace metal;
 
 struct VertexOut {
   float4 position [[position]];
-  float4 color;
+  float2 texCoord;
+    float4 color;
 };
 
 struct VertexIn {
@@ -42,6 +43,7 @@ struct VertexIn {
 
 struct ControlPoint {
   float4 position [[attribute(0)]];
+//    float2 tex [[attribute(1)]];
 };
 
 
@@ -58,7 +60,19 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     float2 top = mix(control_points[0].position.xz, control_points[1].position.xz, u);
     float2 bottom = mix(control_points[3].position.xz, control_points[2].position.xz, u);
     float2 interpolated = mix(top, bottom, v);
+
+//    float2 topTex = mix(control_points[0].tex.xy, control_points[1].position.xy, u);
+//    float2 bottomTex = mix(control_points[3].tex.xy, control_points[2].tex.xy, u);
+//    float2 interpolatedTex = mix(topTex, bottomTex, v);
+
+//    out.position = float4(2 * u - 1, (1 - v) * 2 - 1, 0, 1);
+    
     out.position = float4(interpolated.x, interpolated.y, 0, 1);
+//    out.position = float4(2 * u - 1 + 0.5 * (patch_id % 2), (1 - v) * 2 - 1 - 0.5 * (patch_id / 2), 0, 1);
+//    out.texCoord = interpolatedTex;
+    out.texCoord = interpolated;
+    out.color = out.position;
+    
     if (patch_id == 0) {
         out.color = float4(1, 0, 0, 1);
     }
@@ -68,13 +82,23 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     else {
         out.color = float4(u, v, 0, 1);
     }
+    out.color = float4(1, 0, 0, 1);
   return out;
 }
 
-fragment float4 fragment_main(VertexOut in [[stage_in]])
+fragment float4 fragment_main(VertexOut in [[stage_in]],
+                               texture2d<half> colorMap     [[ texture(0) ]])
 {
-  return in.color;
+    constexpr sampler colorSampler(mip_filter::linear,
+                                   mag_filter::linear,
+                                   min_filter::linear);
+
+    half4 colorSample   = colorMap.sample(colorSampler, in.texCoord.xy);
+
+//    return in.color;
+    return float4(colorSample);
 }
+
 
 kernel void tessellation_main(constant float* edge_factors [[ buffer(0) ]],
                               constant float* inside_factors [[ buffer(1) ]],

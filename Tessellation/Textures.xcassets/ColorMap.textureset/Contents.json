@@ -4,7 +4,8 @@
     "version" : 1
   },
   "properties" : {
-    "interpretation" : "data"
+    "interpretation" : "non-premultiplied-colors",
+    "origin" : "bottom-left"
   },
   "textures" : [
     {

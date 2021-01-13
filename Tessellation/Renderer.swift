@@ -38,6 +38,8 @@ class Renderer: NSObject {
   var renderPipelineState: MTLRenderPipelineState
   var wireframe = true
 
+    var colorMap: MTLTexture
+
   // model transform
   var position = float3([0, 0, 0])
   var rotation = float3(Float(-90).degreesToRadians, 0, 0)
@@ -47,11 +49,11 @@ class Renderer: NSObject {
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 1, vertical: 1)
+    let patches = (horizontal: 2, vertical: 2)
     var patchCount: Int {
         patches.horizontal * patches.vertical
     }
-    static let factor: Float = 16
+    static let factor: Float = 2
     var edgeFactors: [Float] = [factor, factor, factor, factor]
     var insideFactors: [Float] = [factor, factor]
     var controlPointsBuffer: MTLBuffer?
@@ -77,6 +79,15 @@ class Renderer: NSObject {
     renderPipelineState = Renderer.buildRenderPipelineState()
     depthStencilState = Renderer.buildDepthStencilState()
     tessellationPipelineState = Renderer.buildComputePipelineState()
+
+    do {
+        colorMap = try Renderer.loadTexture(device: device, textureName: "girl")
+    } catch {
+        print("Unable to load texture. Error info: \(error)")
+        exit(0)
+    }
+
+    
     super.init()
     metalView.clearColor = MTLClearColor(red: 1, green: 1,
                                          blue: 1, alpha: 1)
@@ -125,6 +136,25 @@ class Renderer: NSObject {
         return try! Renderer.device.makeComputePipelineState(function: kernelFunc)
         
     }
+    
+    class func loadTexture(device: MTLDevice,
+                           textureName: String) throws -> MTLTexture {
+        /// Load texture data with optimal parameters for sampling
+
+        let textureLoader = MTKTextureLoader(device: device)
+
+        let textureLoaderOptions = [
+            MTKTextureLoader.Option.textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue),
+            MTKTextureLoader.Option.textureStorageMode: NSNumber(value: MTLStorageMode.`private`.rawValue)
+        ]
+
+        return try textureLoader.newTexture(name: textureName,
+                                            scaleFactor: 1.0,
+                                            bundle: nil,
+                                            options: textureLoaderOptions)
+
+    }
+
 }
 
 extension Renderer: MTKViewDelegate {
@@ -142,7 +172,7 @@ extension Renderer: MTKViewDelegate {
 //    let projectionMatrix = float4x4(projectionFov: 1.2, near: 0.01, far: 100,
 //                                    aspect: Float(view.bounds.width/view.bounds.height))
     
-    let projectionMatrix = float4x4(orthographic: Rectangle(left: -1, right: 1, top: 1, bottom: -1), near: -10, far: 10)
+    let projectionMatrix = float4x4(orthographic: Rectangle(left: 0, right: 1, top: 1, bottom: 0), near: -10, far: 10)
     let viewMatrix = float4x4(translation: [0, 0, -1.8])
     var mvp = projectionMatrix * viewMatrix.inverse * modelMatrix
 
@@ -169,6 +199,7 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
     let fillmode: MTLTriangleFillMode = wireframe ? .lines : .fill
     renderEncoder.setTriangleFillMode(fillmode)
+    renderEncoder.setFragmentTexture(colorMap, index: 0)
 
     // draw
     renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
