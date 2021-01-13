@@ -49,11 +49,11 @@ class Renderer: NSObject {
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 2, vertical: 1)
+    let patches = (horizontal: 4, vertical: 4)
     var patchCount: Int {
         patches.horizontal * patches.vertical
     }
-    static let factor: Float = 32
+    static let factor: Float = 64
     var edgeFactors: [Float] = [factor, factor, factor, factor]
     var insideFactors: [Float] = [factor, factor]
     var controlPointsBuffer: MTLBuffer?

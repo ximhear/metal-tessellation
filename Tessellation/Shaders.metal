@@ -69,7 +69,7 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     
     out.position = mvp * float4(interpolated.x, 0, interpolated.y, 1);
 //    out.position = float4(2 * u - 1 + 0.5 * (patch_id % 2), (1 - v) * 2 - 1 - 0.5 * (patch_id / 2), 0, 1);
-    out.texCoord = interpolatedTex;
+    out.texCoord = float2(interpolatedTex.x, 1 - interpolatedTex.y);
 //    out.texCoord = interpolated;
     out.color = out.position;
     
