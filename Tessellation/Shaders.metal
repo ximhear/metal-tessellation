@@ -43,13 +43,13 @@ struct VertexIn {
 
 struct ControlPoint {
   float4 position [[attribute(0)]];
-//    float2 tex [[attribute(1)]];
+    float2 tex [[attribute(1)]];
 };
 
 
 [[patch(quad, 4)]]
 vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[stage_in]],
-                             constant float4x4 &mvp [[buffer(1)]],
+                             constant float4x4 &mvp [[buffer(2)]],
                              float2 patch_coord [[position_in_patch]],
                              uint patch_id [[patch_id]])
 {
@@ -61,16 +61,16 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     float2 bottom = mix(control_points[3].position.xz, control_points[2].position.xz, u);
     float2 interpolated = mix(top, bottom, v);
 
-//    float2 topTex = mix(control_points[0].tex.xy, control_points[1].position.xy, u);
-//    float2 bottomTex = mix(control_points[3].tex.xy, control_points[2].tex.xy, u);
-//    float2 interpolatedTex = mix(topTex, bottomTex, v);
+    float2 topTex = mix(control_points[0].tex.xy, control_points[1].position.xy, u);
+    float2 bottomTex = mix(control_points[3].tex.xy, control_points[2].tex.xy, u);
+    float2 interpolatedTex = mix(topTex, bottomTex, v);
 
 //    out.position = float4(2 * u - 1, (1 - v) * 2 - 1, 0, 1);
     
-    out.position = float4(interpolated.x, interpolated.y, 0, 1);
+    out.position = mvp * float4(interpolated.x, 0, interpolated.y, 1);
 //    out.position = float4(2 * u - 1 + 0.5 * (patch_id % 2), (1 - v) * 2 - 1 - 0.5 * (patch_id / 2), 0, 1);
-//    out.texCoord = interpolatedTex;
-    out.texCoord = interpolated;
+    out.texCoord = interpolatedTex;
+//    out.texCoord = interpolated;
     out.color = out.position;
     
     if (patch_id == 0) {

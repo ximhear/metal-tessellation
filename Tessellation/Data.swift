@@ -49,13 +49,13 @@ let vertexBuffer = Renderer.device.makeBuffer(bytes: vertices,
  - Returns: an array of patch control points. Each group of four makes one patch.
 **/
 func createControlPoints(patches: (horizontal: Int, vertical: Int),
-                         size: (width: Float, height: Float)) -> [float3] {
+                         size: (width: Float, height: Float)) -> ([float3], [float2]) {
 
     let cps: [float3] = [
-        [0.0, 0, 0.5],
-        [0.5, 0, 1.0],
-        [1.0, 0, 0.5],
-        [0.5, 0, 0.0]
+        [0.0, 0, 1.0],
+        [1.0, 0, 1.0],
+        [1.0, 0, 0.0],
+        [0.0, 0, 0.0]
     ]
 
     var subcps: [[float3]] = []
@@ -80,6 +80,38 @@ func createControlPoints(patches: (horizontal: Int, vertical: Int),
         points.append(subcps[j][i+1])
         points.append(subcps[j+1][i+1])
         points.append(subcps[j+1][i])
+      }
+    }
+
+    let cpsTex: [float2] = [
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+    ]
+
+    var subcpsTex: [[float2]] = []
+    for y in 0...patches.vertical {
+        let ratioY: Float = Float(y) / Float(patches.vertical)
+        let left: float2 = cpsTex[0] * (1 - ratioY) + cpsTex[3] * ratioY
+        let right: float2 = cpsTex[1] * (1 - ratioY) + cpsTex[2] * ratioY
+        var pts = [float2]()
+        for x in 0...patches.horizontal {
+            let ratioX: Float = Float(x) / Float(patches.horizontal)
+            let pt: float2 = left * (1 - ratioX) + right * ratioX
+            pts.append(pt)
+        }
+        subcpsTex.append(pts)
+    }
+    print("\(subcpsTex)")
+
+    var pointsTex: [float2] = []
+    for j in 0..<patches.vertical {
+      for i in 0..<patches.horizontal {
+        pointsTex.append(subcpsTex[j][i])
+        pointsTex.append(subcpsTex[j][i+1])
+        pointsTex.append(subcpsTex[j+1][i+1])
+        pointsTex.append(subcpsTex[j+1][i])
       }
     }
 
@@ -118,6 +150,6 @@ func createControlPoints(patches: (horizontal: Int, vertical: Int),
 //        [1.0, 0, 0.5],
 //        [0.5, 0, 0.0]
 //    ]
-    print("\(points)")
-  return points
+    print("\(pointsTex)")
+  return (points, pointsTex)
 }

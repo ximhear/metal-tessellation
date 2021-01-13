@@ -49,14 +49,15 @@ class Renderer: NSObject {
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 2, vertical: 2)
+    let patches = (horizontal: 2, vertical: 1)
     var patchCount: Int {
         patches.horizontal * patches.vertical
     }
-    static let factor: Float = 2
+    static let factor: Float = 32
     var edgeFactors: [Float] = [factor, factor, factor, factor]
     var insideFactors: [Float] = [factor, factor]
     var controlPointsBuffer: MTLBuffer?
+    var controlPointsTextureBuffer: MTLBuffer?
     var tessellationPipelineState: MTLComputePipelineState
     
     lazy var tessellationFactorsBuffer: MTLBuffer? = {
@@ -94,7 +95,8 @@ class Renderer: NSObject {
     metalView.delegate = self
     
     let controlPoints = createControlPoints(patches: patches, size: (2, 2))
-    controlPointsBuffer = Renderer.device.makeBuffer(bytes: controlPoints, length: MemoryLayout<float3>.stride * controlPoints.count)
+    controlPointsBuffer = Renderer.device.makeBuffer(bytes: controlPoints.0, length: MemoryLayout<float3>.stride * controlPoints.0.count)
+    controlPointsTextureBuffer = Renderer.device.makeBuffer(bytes: controlPoints.1, length: MemoryLayout<float2>.stride * controlPoints.1.count)
   }
   
   static func buildDepthStencilState() -> MTLDepthStencilState {
@@ -121,9 +123,15 @@ class Renderer: NSObject {
     vertexDescriptor.attributes[0].offset = 0
     vertexDescriptor.attributes[0].bufferIndex = 0
     
+    vertexDescriptor.attributes[1].format = .float2
+    vertexDescriptor.attributes[1].offset = 0
+    vertexDescriptor.attributes[1].bufferIndex = 1
+
     print("float3 stride: \(MemoryLayout<float3>.stride)")
     vertexDescriptor.layouts[0].stride = MemoryLayout<float3>.stride
     vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+    vertexDescriptor.layouts[1].stride = MemoryLayout<float2>.stride
+    vertexDescriptor.layouts[1].stepFunction = .perPatchControlPoint
     descriptor.vertexDescriptor = vertexDescriptor
     
     return try! device.makeRenderPipelineState(descriptor: descriptor)
@@ -193,10 +201,11 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setCullMode(.back)
     renderEncoder.setFrontFacing(.counterClockwise)
     renderEncoder.setDepthStencilState(depthStencilState)
-    renderEncoder.setVertexBytes(&mvp, length: MemoryLayout<float4x4>.stride, index: 1)
+    renderEncoder.setVertexBytes(&mvp, length: MemoryLayout<float4x4>.stride, index: 2)
     renderEncoder.setRenderPipelineState(renderPipelineState)
 //    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBuffer(controlPointsTextureBuffer, offset: 0, index: 1)
     let fillmode: MTLTriangleFillMode = wireframe ? .lines : .fill
     renderEncoder.setTriangleFillMode(fillmode)
     renderEncoder.setFragmentTexture(colorMap, index: 0)
