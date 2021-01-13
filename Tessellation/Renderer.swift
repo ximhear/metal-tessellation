@@ -47,12 +47,13 @@ class Renderer: NSObject {
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 2, vertical: 8)
+    let patches = (horizontal: 1, vertical: 1)
     var patchCount: Int {
         patches.horizontal * patches.vertical
     }
-    var edgeFactors: [Float] = [16, 16, 16, 16]
-    var insideFactors: [Float] = [16, 16]
+    static let factor: Float = 16
+    var edgeFactors: [Float] = [factor, factor, factor, factor]
+    var insideFactors: [Float] = [factor, factor]
     var controlPointsBuffer: MTLBuffer?
     var tessellationPipelineState: MTLComputePipelineState
     
@@ -96,6 +97,8 @@ class Renderer: NSObject {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     descriptor.depthAttachmentPixelFormat = .depth32Float
+    descriptor.maxTessellationFactor = 64
+    descriptor.tessellationOutputWindingOrder = .clockwise
 
     let vertexFunction = Renderer.library?.makeFunction(name: "vertex_main")
     let fragmentFunction = Renderer.library?.makeFunction(name: "fragment_main")
@@ -136,8 +139,10 @@ extension Renderer: MTKViewDelegate {
         return
     }
     // uniforms
-    let projectionMatrix = float4x4(projectionFov: 1.2, near: 0.01, far: 100,
-                                    aspect: Float(view.bounds.width/view.bounds.height))
+//    let projectionMatrix = float4x4(projectionFov: 1.2, near: 0.01, far: 100,
+//                                    aspect: Float(view.bounds.width/view.bounds.height))
+    
+    let projectionMatrix = float4x4(orthographic: Rectangle(left: -1, right: 1, top: 1, bottom: -1), near: -10, far: 10)
     let viewMatrix = float4x4(translation: [0, 0, -1.8])
     var mvp = projectionMatrix * viewMatrix.inverse * modelMatrix
 
@@ -155,6 +160,8 @@ extension Renderer: MTKViewDelegate {
     // render
     let renderEncoder =
       commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)!
+    renderEncoder.setCullMode(.back)
+    renderEncoder.setFrontFacing(.counterClockwise)
     renderEncoder.setDepthStencilState(depthStencilState)
     renderEncoder.setVertexBytes(&mvp, length: MemoryLayout<float4x4>.stride, index: 1)
     renderEncoder.setRenderPipelineState(renderPipelineState)

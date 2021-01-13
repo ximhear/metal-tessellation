@@ -78,5 +78,12 @@ func createControlPoints(patches: (horizontal: Int, vertical: Int),
      0,
      $0.z * size.height - size.height / 2]
   }
+    
+    points = [
+        [-0.7, 0, 0.6],
+        [0.7, 0, 1],
+        [1, 0, -0.9],
+        [-0.8, 0, -0.7]
+    ]
   return points
 }
