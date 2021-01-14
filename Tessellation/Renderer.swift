@@ -36,7 +36,7 @@ class Renderer: NSObject {
   static var library: MTLLibrary?
   var depthStencilState: MTLDepthStencilState
   var renderPipelineState: MTLRenderPipelineState
-  var wireframe = true
+  var wireframe = false
 
     var colorMap: MTLTexture
 
