@@ -61,7 +61,7 @@ vertex VertexOut vertex_main(patch_control_point<ControlPoint> control_points [[
     float2 bottom = mix(control_points[3].position.xz, control_points[2].position.xz, u);
     float2 interpolated = mix(top, bottom, v);
 
-    float2 topTex = mix(control_points[0].tex.xy, control_points[1].position.xy, u);
+    float2 topTex = mix(control_points[0].tex.xy, control_points[1].tex.xy, u);
     float2 bottomTex = mix(control_points[3].tex.xy, control_points[2].tex.xy, u);
     float2 interpolatedTex = mix(topTex, bottomTex, v);
 

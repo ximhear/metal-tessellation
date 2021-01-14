@@ -49,11 +49,11 @@ class Renderer: NSObject {
     return translationMatrix * rotationMatrix
   }
     
-    let patches = (horizontal: 4, vertical: 4)
+    let patches = (horizontal: 2, vertical: 2)
     var patchCount: Int {
         patches.horizontal * patches.vertical
     }
-    static let factor: Float = 64
+    static let factor: Float = 8
     var edgeFactors: [Float] = [factor, factor, factor, factor]
     var insideFactors: [Float] = [factor, factor]
     var controlPointsBuffer: MTLBuffer?
@@ -82,7 +82,7 @@ class Renderer: NSObject {
     tessellationPipelineState = Renderer.buildComputePipelineState()
 
     do {
-        colorMap = try Renderer.loadTexture(device: device, textureName: "girl")
+        colorMap = try Renderer.loadTexture(device: device, textureName: "grass-color")
     } catch {
         print("Unable to load texture. Error info: \(error)")
         exit(0)
